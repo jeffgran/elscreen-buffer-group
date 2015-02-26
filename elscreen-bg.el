@@ -8,7 +8,7 @@
 ;; Created: 7 Nov 2012
 ;; Keywords: buffer
 ;; Version: 1.0.0
-;; Package-Requires: ((elscreen "20140421.414"))
+;; Package-Requires: ((elscreen "2012-09-21"))
 
 ;; This file is not part of GNU Emacs.
 
@@ -57,15 +57,15 @@
 (require 'elscreen)
 
 (defvar elscreen-bg-skip-commands `(ibuffer)
-  "List of commands that should NOT filter to only show the current screen's buffer group")
+  "List of commands that should NOT filter to only show the current screen's buffer group.")
 
 (defvar elscreen-bg-exclusive t
-  "non-nil means a buffer can only belong to one screen at once.")
+  "Non-nil means a buffer can only belong to one screen at once.")
 
 (defun elscreen-bg-add-buffer-to-list (arg)
   "Add the buffer to the current screen's elscreen-bg-list elscreen property.
 
-ARG is either a buffer or a buffer-name that can be used to get the buffer via"
+ARG is either a buffer or a buffer name that can be used to get the buffer via"
   (let* ((screen-properties (elscreen-get-screen-property (elscreen-get-current-screen)))
          (elscreen-bg-list (elscreen-bg-get-alist 'elscreen-bg-list screen-properties))
          (the-new-buffer (if (stringp arg)
@@ -118,7 +118,7 @@ ARG is either a buffer or a buffer-name that can be used to get the buffer via"
 
 
 (defun elscreen-bg-reorder-buffer-list (the-list)
-  "Set buffers in NEW-LIST to be the most recently used, in order."
+  "Set buffers in THE-LIST to be the most recently used, in order."
     (ad-deactivate 'buffer-list)
     (setq real-buffer-list (buffer-list))
     (ad-activate 'buffer-list)
@@ -143,6 +143,7 @@ recently used."
 
 ;; these two are to add any newly shown buffer to the buffer list of the current screen
 (defadvice display-buffer (around elscreen-bg-display-buffer-advice activate)
+  "Add any newly displayed buffer to the current screen's buffer group."
   (setq ret-val ad-do-it)
   (setq the-buffer ret-val)
   (setq the-buffer (cond
@@ -157,6 +158,7 @@ recently used."
   (setq ad-return-value ret-val))
 
 (defadvice switch-to-buffer (around elscreen-bg-switch-to-buffer-advice activate)
+  "Add any newly displayed buffer to the current screen's buffer group."
   (setq ret-val ad-do-it)
   (setq the-buffer ret-val)
   (setq the-buffer (cond
@@ -185,7 +187,9 @@ recently used."
   )
 
 (defadvice switch-to-prev-buffer (around elscreen-bg-switch-to-prev-buffer activate) 
-"this is for when you kill a buffer. it looks for a buffer to show next. we
+"This is for when you kill a buffer.
+
+It looks for a buffer to show next.  We
 want to make sure it only shows one from the list of buffers in the current
 screen"
   ;; nth 1 means the 'next' one (the 'first' one is the current one we're closing)
@@ -198,16 +202,19 @@ screen"
 
 
 (defadvice kill-buffer (around elscreen-bg-dont-kill-scratch activate)
+  "Don't kill the scratch buffer."
   (unless (string= (buffer-name (current-buffer)) "*scratch*")
       ad-do-it)
 )
 
 
 (defun elscreen-bg-get-current-property (name)
+  "Convenience method to get property by NAME, of the current elscreen."
   (let((properties (elscreen-get-screen-property (elscreen-get-current-screen)))
        (elscreen-bg-get-alist name properties))))
 
 (defun elscreen-bg-get-alist (key alist)
+  "Convenience method to get a value by KEY from ALIST."
   (cdr (assoc key alist)))
 
 
