@@ -8,7 +8,7 @@
 ;; Created: 7 Nov 2012
 ;; Keywords: buffer
 ;; Version: 1.0.0
-;; Package-Requires: ((elscreen "2012-09-21"))
+;; Package-Requires: ((elscreen "2012-09-21") (cl-lib "0.5"))
 
 ;; This file is not part of GNU Emacs.
 
@@ -54,6 +54,7 @@
 
 ;;; Code:
 
+(require 'cl-lib)
 (require 'elscreen)
 
 (defvar elscreen-bg-skip-commands `(ibuffer)
@@ -106,9 +107,9 @@ ARG is either a buffer or a buffer name that can be used to get the buffer via"
   "Return the saved list of buffers which have been accessed in this screen"
   (let ((screen-properties (elscreen-get-screen-property (or screen (elscreen-get-current-screen)))))
     (elscreen-bg-reorder-buffer-list 
-     (remove-if-not 'buffer-live-p 
-                    (or (elscreen-bg-get-alist 'elscreen-bg-list screen-properties)
-                        (list (get-buffer "*scratch*")))))))
+     (cl-remove-if-not 'buffer-live-p 
+                       (or (elscreen-bg-get-alist 'elscreen-bg-list screen-properties)
+                           (list (get-buffer "*scratch*")))))))
 
 
 ;;make ido-switch-buffer (& friends) use my buffer list
