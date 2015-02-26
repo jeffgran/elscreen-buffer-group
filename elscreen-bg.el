@@ -113,10 +113,12 @@ ARG is either a buffer or a buffer name that can be used to get the buffer via"
 
 
 ;;make ido-switch-buffer (& friends) use my buffer list
-(add-hook 'ido-make-buffer-list-hook 
-          (lambda () (setq ido-temp-list (mapcar 'buffer-name (elscreen-bg-get-buffer-list)) )))
+(eval-after-load 'ido
+  '(add-hook 'ido-make-buffer-list-hook 'elscreen-bg-filter-ido-buffer-list))
 
-
+(defun elscreen-bg-filter-ido-buffer-list ()
+  "Filter ido's buffer list and history list"
+  (setq ido-temp-list (mapcar 'buffer-name (elscreen-bg-get-buffer-list))))
 
 (defun elscreen-bg-reorder-buffer-list (the-list)
   "Set buffers in THE-LIST to be the most recently used, in order."
@@ -126,9 +128,10 @@ ARG is either a buffer or a buffer name that can be used to get the buffer via"
       (elscreen-bg-filter-buffer-list the-list real-buffer-list)))
 
 (defun elscreen-bg-filter-buffer-list (the-list real-buffer-list)
-  "Filter the 'real list' (the result of the original (buffer-list) call, which is a c function and returns them in order of 
-most recently used) only keeping the ones that are in the-list. The purpose is to effectively sort the-list in order of most 
-recently used."
+  "Return only elements from THE-LIST that are also in REAL-BUFFER-LIST.
+
+The intention is that REAL-BUFFER-LIST is the buffer list from c-source code and THE-LIST is 
+from elscreen-bg, so we only want to keep the ones from here."
   (if (member this-command elscreen-bg-skip-commands)
       real-buffer-list
     (delq nil
