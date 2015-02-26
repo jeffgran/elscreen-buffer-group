@@ -211,8 +211,8 @@ screen"
 
 (defun elscreen-bg-get-current-property (name)
   "Convenience method to get property by NAME, of the current elscreen."
-  (let((properties (elscreen-get-screen-property (elscreen-get-current-screen)))
-       (elscreen-bg-get-alist name properties))))
+  (let ((properties (elscreen-get-screen-property (elscreen-get-current-screen))))
+    (elscreen-bg-get-alist name properties)))
 
 (defun elscreen-bg-get-alist (key alist)
   "Convenience method to get a value by KEY from ALIST."
