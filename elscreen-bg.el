@@ -121,10 +121,10 @@ ARG is either a buffer or a buffer name that can be used to get the buffer via"
 (defun elscreen-bg-reorder-buffer-list (the-list)
   "Set buffers in THE-LIST to be the most recently used, in order."
     (ad-deactivate 'buffer-list)
-    (setq real-buffer-list (buffer-list))
-    (ad-activate 'buffer-list)
+    (let ((real-buffer-list (buffer-list)))
+      (ad-activate 'buffer-list)
 
-    (elscreen-bg-filter-buffer-list the-list real-buffer-list)
+      (elscreen-bg-filter-buffer-list the-list real-buffer-list))
     
     )
 
