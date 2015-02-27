@@ -182,9 +182,10 @@ Basically we hack in here and add another predicate to whatever predicates are a
 if any, so that this only matches/returns buffers in the current elscreen."
   (lexical-let ((string (ad-get-arg 0))
                 (pred (ad-get-arg 1)))
-    (ad-set-arg 1 (lambda (buffer-dot-name)
-                    (and (if pred (funcall pred buffer-dot-name) t) 
-                         (member (cdr buffer-dot-name) (elscreen-bg-get-raw-buffer-list))))))
+    (when (not (member this-command 'elscreen-bg-skip-commands))
+      (ad-set-arg 1 (lambda (buffer-dot-name)
+                      (and (if pred (funcall pred buffer-dot-name) t)
+                           (member (cdr buffer-dot-name) (elscreen-bg-get-raw-buffer-list)))))))
   ad-do-it)
 
 (defadvice elscreen-kill (before elscreen-bg-kill-buffers activate)
