@@ -8,7 +8,7 @@
 ;; Created: 7 Nov 2012
 ;; Keywords: buffer
 ;; Version: 1.0.0
-;; Package-Requires: ((elscreen "0") (cl-lib "0.5"))
+;; Package-Requires: ((emacs "24.3") (elscreen "0") (cl-lib "0.5"))
 
 ;; This file is not part of GNU Emacs.
 
@@ -54,6 +54,7 @@
 
 ;;; Code:
 
+
 (require 'cl-lib)
 (require 'elscreen)
 
@@ -72,7 +73,6 @@ ARG is either a buffer or a buffer name that can be used to get the buffer via"
          (the-new-buffer (if (stringp arg)
                              (get-buffer arg)
                            arg)))
-    ;;(message (buffer-name the-new-buffer))
 
     ;; add the new buffer to the list
     (if (null elscreen-bg-list)
@@ -91,33 +91,35 @@ ARG is either a buffer or a buffer name that can be used to get the buffer via"
          (elscreen-bg-remove-buffer-from-list the-new-buffer screen)))
        (elscreen-get-screen-list)))
 
-    
     ;; "refresh" the screen/tabs display in the top line
-    (elscreen-run-screen-update-hook)
-    ))
+    (elscreen-run-screen-update-hook)))
 
 (defun elscreen-bg-remove-buffer-from-list (buffer screen)
-  "Remove BUFFER from the buffer list for SCREEN"
+  "Remove BUFFER from the buffer list for SCREEN."
   (let ((the-buffer-list (elscreen-bg-get-buffer-list screen))
         (screen-properties (elscreen-get-screen-property screen)))
     (elscreen--set-alist 'screen-properties 'elscreen-bg-list (remove buffer the-buffer-list))
     (elscreen-set-screen-property screen screen-properties)))
                            
-(defun elscreen-bg-get-buffer-list (&optional screen)
+(defun elscreen-bg-get-ordered-buffer-list (&optional screen)
+  "Return the saved list of buffers which have been accessed in SCREEN or the current screen,
+ordered by recency."
+  (elscreen-bg-reorder-buffer-list 
+   (cl-remove-if-not 'buffer-live-p (elscreen-bg-get-raw-buffer-list screen))))
+
+
+(defun elscreen-bg-get-raw-buffer-list (&optional screen)
   "Return the saved list of buffers which have been accessed in this screen"
   (let ((screen-properties (elscreen-get-screen-property (or screen (elscreen-get-current-screen)))))
-    (elscreen-bg-reorder-buffer-list 
-     (cl-remove-if-not 'buffer-live-p 
-                       (or (elscreen-bg-get-alist 'elscreen-bg-list screen-properties)
-                           (list (get-buffer "*scratch*")))))))
-
+    (or (elscreen-bg-get-alist 'elscreen-bg-list screen-properties)
+        (list (get-buffer "*scratch*")))))
 
 ;;make ido-switch-buffer (& friends) use my buffer list
 (eval-after-load 'ido
   '(add-hook 'ido-make-buffer-list-hook 'elscreen-bg-filter-ido-buffer-list))
 
 (defun elscreen-bg-filter-ido-buffer-list ()
-  "Filter ido's buffer list and history list"
+  "Filter ido's buffer list and history list."
   (setq ido-temp-list (mapcar 'buffer-name (elscreen-bg-get-buffer-list))))
 
 (defun elscreen-bg-reorder-buffer-list (the-list)
@@ -134,58 +136,59 @@ The intention is that REAL-BUFFER-LIST is the buffer list from c-source code and
 from elscreen-bg, so we only want to keep the ones from here."
   (if (member this-command elscreen-bg-skip-commands)
       real-buffer-list
-    (delq nil
-          (mapcar (lambda (x) 
-                    (and 
-                     (member (buffer-name x) (mapcar 'buffer-name the-list))
-                     x ))
-                  real-buffer-list))))
-
+    (cl-intersection (mapcar 'get-buffer the-list) real-buffer-list)))
 
 ;; these two are to add any newly shown buffer to the buffer list of the current screen
 (defadvice display-buffer (around elscreen-bg-display-buffer-advice activate)
   "Add any newly displayed buffer to the current screen's buffer group."
-  (setq ret-val ad-do-it)
-  (setq the-buffer ret-val)
-  (setq the-buffer (cond
-                    ((bufferp ret-val)
-                     ret-val)
-                    ((windowp ret-val)
-                     (window-buffer ret-val))
-                    (t
-                     (throw "wat did this return?"))))
-  ;;(message (prin1-to-string the-buffer))
-  (elscreen-bg-add-buffer-to-list the-buffer)
-  (setq ad-return-value ret-val))
+  (let* ((ret-val ad-do-it)
+          (the-buffer (cond
+                       ((bufferp ret-val)
+                        ret-val)
+                       ((windowp ret-val)
+                        (window-buffer ret-val))
+                       (t
+                        (throw "wat did this return?")))))
+     ;;(message (prin1-to-string the-buffer))
+     (elscreen-bg-add-buffer-to-list the-buffer)
+     (setq ad-return-value ret-val)))
 
 (defadvice switch-to-buffer (around elscreen-bg-switch-to-buffer-advice activate)
   "Add any newly displayed buffer to the current screen's buffer group."
-  (setq ret-val ad-do-it)
-  (setq the-buffer ret-val)
-  (setq the-buffer (cond
-                    ((bufferp ret-val)
-                     ret-val)
-                    ((windowp ret-val)
-                     (window-buffer ret-val))
-                    (t
-                     (throw "wat did this return?"))))
-  ;;(message (prin1-to-string the-buffer))
-  (elscreen-bg-add-buffer-to-list the-buffer)
-  (setq ad-return-value ret-val))
-
-
+  (let* ((ret-val ad-do-it)
+          (the-buffer (cond
+                       ((bufferp ret-val)
+                        ret-val)
+                       ((windowp ret-val)
+                        (window-buffer ret-val))
+                       (t
+                        (throw "wat did this return?")))))
+     ;;(message (prin1-to-string the-buffer))
+     (elscreen-bg-add-buffer-to-list the-buffer)
+     (setq ad-return-value ret-val)))
 
 
 (defadvice buffer-list (around elscreen-bg-buffer-list activate)
-  "make the built-in function (buffer-list) return MY buffer list instead"
+  "Make the built-in function (buffer-list) return MY buffer list instead."
   (when (not (member this-command 'elscreen-bg-skip-commands))
     (setq ad-return-value (elscreen-bg-get-buffer-list))))
 
 
+(defadvice internal-complete-buffer (around elscreen-bg-internal-complete-buffer activate)
+  "This is a c function that completes for a buffer, optionally with a predicate. 
+
+Basically we hack in here and add another predicate to whatever predicates are already there,
+if any, so that this only matches/returns buffers in the current elscreen."
+  (lexical-let ((string (ad-get-arg 0))
+                (pred (ad-get-arg 1)))
+    (ad-set-arg 1 (lambda (buffer-dot-name)
+                    (and (if pred (funcall pred buffer-dot-name) t) 
+                         (member (cdr buffer-dot-name) (elscreen-bg-get-raw-buffer-list))))))
+  ad-do-it)
+
 (defadvice elscreen-kill (before elscreen-bg-kill-buffers activate)
-  "when you kill a screen, kill all the buffers in its list."
-  (mapcar '(lambda (b) (kill-buffer b)) (elscreen-bg-get-buffer-list))
-  )
+  "When you kill a screen, kill all the buffers in its list."
+  (mapcar '(lambda (b) (kill-buffer b)) (elscreen-bg-get-buffer-list)))
 
 (defadvice switch-to-prev-buffer (around elscreen-bg-switch-to-prev-buffer activate) 
 "This is for when you kill a buffer.
@@ -198,21 +201,16 @@ screen"
          (the-buffer (or (and (not (eq last-buffer (window-buffer (selected-window))))
                               last-buffer)
                          (get-buffer "*scratch*"))))
-    (set-window-buffer (selected-window) the-buffer)
-    ))
-
+    (set-window-buffer (selected-window) the-buffer)))
 
 (defadvice kill-buffer (around elscreen-bg-dont-kill-scratch activate)
   "Don't kill the scratch buffer."
   (unless (string= (buffer-name (current-buffer)) "*scratch*")
-      ad-do-it)
-)
-
+      ad-do-it))
 
 (defun elscreen-bg-get-alist (key alist)
   "Convenience method to get a value by KEY from ALIST."
   (cdr (assoc key alist)))
-
 
 (provide 'elscreen-bg)
 
