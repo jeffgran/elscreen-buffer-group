@@ -8,7 +8,7 @@
 ;; Created: 7 Nov 2012
 ;; Keywords: buffer
 ;; Version: 1.0.1
-;; Package-Requires: ((emacs "24.3") (elscreen "0") (cl-lib "0.5"))
+;; Package-Requires: ((emacs "24.4") (elscreen "0") (cl-lib "0.5"))
 
 ;; This file is not part of GNU Emacs.
 
