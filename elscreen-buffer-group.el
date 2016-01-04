@@ -65,13 +65,10 @@
 (defvar elscreen-buffer-group-exclusive t
   "Non-nil means a buffer can only belong to one screen at once.")
 
-(defvar elscreen-buffer-group-global-mode nil
-  "Whether or not to enable elscreen-buffer-group.")
-
-
-(defun toggle-elscreen-buffer-group-global-mode (&optional arg)
-  "Toggles elscreen-buffer-group on or off."
-  (if (or arg (not elscreen-buffer-group-global-mode))
+(define-minor-mode elscreen-buffer-group-global-mode
+  "Toggle elscreen buffer groups."
+  :global t
+  (if elscreen-buffer-group-global-mode
       (progn
         (setq elscreen-buffer-group-global-mode t)
         (ad-enable-advice 'display-buffer 'around 'elscreen-buffer-group-display-buffer-advice)
@@ -83,15 +80,15 @@
         (ad-enable-advice 'switch-to-buffer 'around 'elscreen-buffer-group-switch-to-buffer-advice)
         (message "elscreen-buffer-group is on"))
     (progn
-        (setq elscreen-buffer-group-global-mode nil)
-        (ad-disable-advice 'display-buffer 'around 'elscreen-buffer-group-display-buffer-advice)
-        (ad-disable-advice 'kill-buffer 'around 'elscreen-buffer-group-dont-kill-scratch)
-        (ad-disable-advice 'switch-to-prev-buffer 'around 'elscreen-buffer-group-switch-to-prev-buffer)
-        (ad-disable-advice 'elscreen-kill 'before 'elscreen-buffer-group-kill-buffers)
-        (ad-disable-advice 'internal-complete-buffer 'around 'elscreen-buffer-group-internal-complete-buffer)
-        (ad-disable-advice 'buffer-list 'around 'elscreen-buffer-group-buffer-list)
-        (ad-disable-advice 'switch-to-buffer 'around 'elscreen-buffer-group-switch-to-buffer-advice)
-        (message "elscreen-buffer-group is off"))))
+      (setq elscreen-buffer-group-global-mode nil)
+      (ad-disable-advice 'display-buffer 'around 'elscreen-buffer-group-display-buffer-advice)
+      (ad-disable-advice 'kill-buffer 'around 'elscreen-buffer-group-dont-kill-scratch)
+      (ad-disable-advice 'switch-to-prev-buffer 'around 'elscreen-buffer-group-switch-to-prev-buffer)
+      (ad-disable-advice 'elscreen-kill 'before 'elscreen-buffer-group-kill-buffers)
+      (ad-disable-advice 'internal-complete-buffer 'around 'elscreen-buffer-group-internal-complete-buffer)
+      (ad-disable-advice 'buffer-list 'around 'elscreen-buffer-group-buffer-list)
+      (ad-disable-advice 'switch-to-buffer 'around 'elscreen-buffer-group-switch-to-buffer-advice)
+      (message "elscreen-buffer-group is off"))))
 
 (defun elscreen-buffer-group-add-buffer-to-list (arg)
   "Add the buffer to the current screen's elscreen-buffer-group-list elscreen property.
