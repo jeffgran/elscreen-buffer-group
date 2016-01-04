@@ -25,13 +25,13 @@ You have to be using elscreen, then just require it.
 
 ```lisp
 (require 'elscreen)
-(require 'elscreen-bg)
+(require 'elscreen-buffer-group)
 ```
 
 You can choose which commands do NOT filter the buffer list:
 
 ```lisp
-(setq 'elscreen-bg-skip-commands `(my-special-buffer-switching-command))
+(setq 'elscreen-buffer-group-skip-commands `(my-special-buffer-switching-command))
 ```
 
 You can turn on/off exclusivity, meaning a buffer can ONLY belong to one
@@ -40,5 +40,5 @@ If it's non-nil, adding a buffer to a screen (displaying it while in that
 screen) will remove it from all other screens:
 
 ```lisp
-(setq elscreen-bg-exclusive nil)
+(setq elscreen-buffer-group-exclusive nil)
 ```
