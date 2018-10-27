@@ -219,7 +219,7 @@ from elscreen-buffer-group, so we only want to keep the ones from here."
 
 (defadvice buffer-list (around elscreen-buffer-group-buffer-list activate)
   "Make the built-in function (buffer-list) return MY buffer list instead."
-  (when (not (member this-command 'elscreen-buffer-group-skip-commands))
+  (when (not (member this-command elscreen-buffer-group-skip-commands))
     (setq ad-return-value (elscreen-buffer-group-get-ordered-buffer-list))))
 
 
