@@ -238,7 +238,7 @@ if any, so that this only matches/returns buffers in the current elscreen."
 
 (defadvice elscreen-kill (before elscreen-buffer-group-kill-buffers activate)
   "When you kill a screen, kill all the buffers in its list."
-  (mapcar (lambda (b) (kill-buffer b)) (elscreen-buffer-group-get-raw-buffer-list)))
+  (mapc (lambda (b) (kill-buffer b)) (elscreen-buffer-group-get-raw-buffer-list)))
 
 (defadvice switch-to-prev-buffer (around elscreen-buffer-group-switch-to-prev-buffer activate)
 "This is for when you kill a buffer.
